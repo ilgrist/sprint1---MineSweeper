@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -7,14 +8,31 @@
     <title>Document</title>
     <link rel="stylesheet" href="css/app.css">
 </head>
+
 <body onload="init()">
-    <h1 style="font-size: 1.4em;">MineSweeper</h1>
+    <h1>MineSweeper</h1>
+    <h2>Select difficulty:</h2>
+    <div class="diffOps">
+        <input type="radio" checked="checked" id="Easy" name="diff" value="Easy" onclick="diffSelected(0)">
+        <label for="Easy">Easy</label>
+        <input type="radio" id="Medium" name="diff" value="Medium" onclick="diffSelected(1)">
+        <label for="Medium">Medium</label>
+        <input type="radio" id="Expert" name="diff" value="Expert" onclick="diffSelected(2)">
+        <label for="Expert">Expert</label>
+        <br>
+    </div>
+    <div class="smiley"></div>
+    <div class="lives"></div>
     <table class="boardCont">
         <tbody class="board">
-            
+
         </tbody>
     </table>
+    <div class="stopwatch">00:00:000</div>
+    <div class="modal"><span>Game over!</span><button onclick="init()">Play again</button></div>
     <script src="js/game.js"></script>
+    <script src="js/stopwatch.js"></script>
     <script src="js/util.js"></script>
 </body>
+
 </html>

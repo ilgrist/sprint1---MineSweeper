@@ -7,10 +7,6 @@ body {
   border-color: black;
 }
 
-.isHidden {
-  font-size: 0px;
-}
-
 .board td {
   width: 40px;
   height: 40px;
@@ -22,4 +18,20 @@ body {
 .boardCont {
   margin-left: auto;
   margin-right: auto;
+}
+
+.modal {
+  height: 80px;
+  width: 100px;
+  font-size: 20px;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  /* position: absolute; */
+  /* top: 200px;
+  left: 350px; */
+  padding-top: 10px;
+  background-color: lightblue;
+  border: thick solid lightcoral;
+  display: none;
 }
