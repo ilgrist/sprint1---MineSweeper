@@ -30,7 +30,6 @@ function clickedCell(i, j, ev) {
         clickedMine(coords);
         return;
       } else {
-        // debugger;
         gameOver();
         return;
       }

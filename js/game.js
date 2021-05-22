@@ -242,7 +242,6 @@ function clickedHint(elHint) {
 }
 
 function revealHint(coords) {
-  // LATER support unclicking a hint
   setNegs(coords, peekCell);
   setTimeout(function () {
     setNegs(coords, unPeekCell);
