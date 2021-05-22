@@ -56,18 +56,3 @@ function switchVals(arr, idxA, idxB) {
   arr[idxA] = arr[idxB];
   arr[idxB] = temp;
 }
-
-// // a neighbor loop excecutes a function on all neig cells
-// function setNegs(coords, mat, funcName) {
-//   for (var i = coords.i - 1; i <= coords.i + 1; i++) {
-//     if (i < 0 || i >= mat.length) continue;
-//     for (var j = coords.j - 1; j <= coords.j + 1; j++) {
-//       if (i === coords.i && j === coords.j) continue;
-//       if (j < 0 || j >= mat[i].length) continue;
-//       funcName(i, j);
-//       // TODO
-//       // Update the model:
-//       // Update the dom:
-//     }
-//   }
-// }
