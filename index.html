@@ -13,16 +13,18 @@
     <h1>MineSweeper</h1>
     <h2>Select difficulty:</h2>
     <div class="diffOps">
-        <input type="radio" checked="checked" id="Easy" name="diff" value="Easy" onclick="diffSelected(0)">
+        <!-- <input type="radio" checked="checked" id="Easy" name="diff" value="Easy" onclick="getDiffSelected(0)">
         <label for="Easy">Easy</label>
-        <input type="radio" id="Medium" name="diff" value="Medium" onclick="diffSelected(1)">
+        <input type="radio" id="Medium" name="diff" value="Medium" onclick="getDiffSelected(1)">
         <label for="Medium">Medium</label>
-        <input type="radio" id="Expert" name="diff" value="Expert" onclick="diffSelected(2)">
+        <input type="radio" id="Expert" name="diff" value="Expert" onclick="getDiffSelected(2)">
         <label for="Expert">Expert</label>
-        <br>
+        <br> -->
     </div>
     <div class="smiley"></div>
     <div class="lives"></div>
+    <div class="flags"></div>
+    <div class="hints"></div>
     <table class="boardCont">
         <tbody class="board">
 
@@ -33,6 +35,7 @@
     <script src="js/game.js"></script>
     <script src="js/stopwatch.js"></script>
     <script src="js/util.js"></script>
+    <script src="js/cells.js"></script>
 </body>
 
 </html>
