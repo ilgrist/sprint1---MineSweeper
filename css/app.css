@@ -1,23 +1,60 @@
 body {
+  position: inherit;
   text-align: center;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-.board {
-  border: 10px;
-  border-color: black;
+.featureCont {
+  margin-left: auto;
+  margin-right: auto;
+  height: 30px;
+  padding: 10px;
+  width: 230px;
+  border: 1px solid black;
+  margin-bottom: 10px;
 }
 
+.feature {
+  border: 5px solid white;
+}
+
+.lives {
+  width: 40%;
+  float: left;
+}
+
+.flags {
+  float: left;
+}
+.hints {
+  float: right;
+  text-align: right;
+  cursor: pointer;
+}
+
+.smiley {
+  font-size: 30px;
+  cursor: pointer;
+  margin-top: 5px;
+  margin-bottom: 10px;
+}
 .board td {
   width: 40px;
   height: 40px;
   text-align: center;
   font-size: 0;
   background-color: lightgray;
+  border: 1px solid black;
 }
 
 .boardCont {
   margin-left: auto;
   margin-right: auto;
+  border: 1px solid black;
+}
+
+.clickedMine {
+  outline: 2px solid red;
 }
 
 .modal {
@@ -27,9 +64,6 @@ body {
   text-align: center;
   margin-left: auto;
   margin-right: auto;
-  /* position: absolute; */
-  /* top: 200px;
-  left: 350px; */
   padding-top: 10px;
   background-color: lightblue;
   border: thick solid lightcoral;

@@ -1,3 +1,4 @@
+'use-strict';
 //stopwatch vars
 var tStart;
 var tUpdated;
@@ -34,4 +35,5 @@ function stopSaveTime() {
   clearInterval(tInterval);
   var elStopwatch = document.querySelector('.stopwatch');
   tSaved = elStopwatch.innerHTML;
+  elStopwatch.innerHTML = '00:00:000';
 }

@@ -2,46 +2,67 @@
 
 var MINE = '💣';
 var MARK = '🚩';
-var VICTORY = '';
-var LIFE = '❤';
-var NORMAL = '😀';
-var EXPLODE = '🤯';
-var WIN = '😎';
+var LIFE = '💖';
+var HINT = '💡';
+var HINT_USED = '📙';
+var SMILEY_NORMAL = '😀';
+var SMILEY_EXPLODE = '🤯';
+var SMILEY_WIN = '😎';
 var victorySound = new Audio('sounds/victory.mp3');
 var gameOverSound = new Audio('sounds/game-over.mp3');
 
 var gBoard = [];
 var gDiffOpts = [
-  { id: 1, boardSize: 4, minesNum: 2 },
-  { id: 2, boardSize: 8, minesNum: 12 },
-  { id: 3, boardSize: 12, minesNum: 30 },
+  { id: 1, name: 'Easy', boardSize: 4, minesNum: 2 },
+  { id: 2, name: 'Medium', boardSize: 8, minesNum: 12 },
+  { id: 3, name: 'Expert', boardSize: 12, minesNum: 30 },
 ];
 
 var gGame = {
   isOn: false,
+  diffIdx: 0,
   boardSize: 4,
-  minesNum: 2,
+  mines: 2,
+  unmarkedMines: 0,
+  hiddenCellsCount: 0,
   isFirstClick: true,
+  isHintModeOn: false,
+  hints: 3,
   lives: 0,
+  flags: 2,
 };
 
 function init() {
   gGame.isOn = true;
-  gGame.isFirstClick = true;
-  gGame.lives = 3;
-  updateLives(0);
+  resetStats();
+  stopSaveTime();
   gBoard = buildBoard(gGame.boardSize);
+  updateRenderLives(0);
+  buildRenderHints();
   renderBoard(gBoard);
+  renderDiffOps();
   toggleModal();
   soundsStop();
-  updateSmiley(NORMAL);
+  renderSmiley(SMILEY_NORMAL);
+  renderUpdateFlags(0);
 }
 
-function updateSmiley(smiley) {
-  var elSmiley = document.querySelector('.smiley');
-  elSmiley.innerHTML = smiley;
+function resetStats() {
+  gGame.hiddenCellsCount = Math.pow(gGame.boardSize, 2) - gGame.mines;
+  gGame.unmarkedMines = gGame.mines;
+  gGame.lives = 3;
+  gGame.hints = 3;
+  gGame.flags = gGame.mines;
+  gGame.isFirstClick = true;
+  gGame.isHintModeOn = false;
 }
 
+// function clickedHint(elCell) {
+//   // get elCell from cellClicked (when in Hint mode)
+//   // reveals the neghboring cells for one second
+// }
+
+// builds a board with empty cells
 function buildBoard(size) {
   var board = [];
   for (var i = 0; i < size; i++) {
@@ -54,9 +75,10 @@ function buildBoard(size) {
   return board;
 }
 
-//place mines, except on the clicked cell, updates the mine count in each cell
-function placeMines(skipCoords) {
-  var mineCoords = getRandCoordsExc(gBoard, gGame.minesNum, skipCoords);
+//place mines randomly on the board (skipping the cell in the coords)
+//updates the mine count in each cell
+function placeUpdateMines(coords) {
+  var mineCoords = getRandCoordsExc(gBoard, gGame.mines, coords);
   for (var i = 0; i < mineCoords.length; i++) {
     var idxRow = mineCoords[i].i;
     var idxCol = mineCoords[i].j;
@@ -72,9 +94,7 @@ function placeMines(skipCoords) {
   }
 }
 
-//renders board with hidden cells
 function renderBoard() {
-  removeRightClickMenu();
   var strHTML = '';
   var len = gBoard.length;
   for (var i = 0; i < len; i++) {
@@ -82,7 +102,7 @@ function renderBoard() {
     for (var j = 0; j < len; j++) {
       var tdId = `cell-${i}-${j}`;
       var cellValue = gBoard[i][j].isMine ? MINE : gBoard[i][j].minesAroundCount;
-      strHTML += `<td id="${tdId}" onmousedown="cellClicked(this, event)"><span>${cellValue}</span></td>`;
+      strHTML += `<td id="${tdId}" onmousedown="clickedCell(${i}, ${j}, event)"><span>${cellValue}</span></td>`;
     }
   }
   strHTML += '</tr>';
@@ -90,105 +110,24 @@ function renderBoard() {
   elBoard.innerHTML = strHTML;
 }
 
-function diffSelected(diffIdx) {
-  var selectedDiff = gDiffOpts[diffIdx];
-  gGame.boardSize = selectedDiff.boardSize;
-  gGame.minesNum = selectedDiff.minesNum;
+function renderDiffOps() {
+  var strHTML = '';
+  for (var i = 0; i < gDiffOpts.length; i++) {
+    var currOp = gDiffOpts[i];
+    var checkedOp = i === gGame.diffIdx ? 'checked="checked"' : '';
+    strHTML += `<input type="radio" ${checkedOp} id="${i + 1}" name="diff" value="${currOp.name}" onclick="getDiffSelected(${i})">
+    <label for="${currOp.name}">${currOp.name}</label>`;
+  }
+  var elDiffOps = document.querySelector('.diffOps');
+  elDiffOps.innerHTML = strHTML;
+}
+
+// get the input from the radio buttons, restarts the game with the new difficulty
+function getDiffSelected(idx) {
+  gGame.diffIdx = idx;
+  gGame.boardSize = gDiffOpts[idx].boardSize;
+  gGame.unmarkedMines = gGame.mines = gGame.flags = gDiffOpts[idx].minesNum;
   init();
-}
-
-function createCell(i, j) {
-  var cell = {
-    isMine: false,
-    isMarked: false,
-    minesAroundCount: 0,
-    isShown: false,
-  };
-  return cell;
-}
-
-function cellClicked(elCell, ev) {
-  if (!gGame.isOn) return;
-  var coords = getCellCoords(elCell);
-  var cell = gBoard[coords.i][coords.j];
-  // TODO - fix the timing here, there's no need to get the elCurrCell again after this 'if'
-  if (gGame.isFirstClick) {
-    gGame.isFirstClick = false;
-    placeMines(coords);
-    renderBoard();
-    startTimer();
-  }
-  var elCurrCell = getElCell(coords.i, coords.j);
-
-  if (ev.button === 2) {
-    toggleMark(elCurrCell);
-    return;
-  }
-
-  if (ev.button === 0) {
-    if (cell.isMine) {
-      if (gGame.lives > 1) {
-        updateSmiley(EXPLODE);
-        setTimeout(function () {
-          updateSmiley(NORMAL);
-        }, 2000);
-        alert('You stepped on a mine!');
-        updateLives(-1);
-        return;
-      } else {
-        updateLives(-1);
-        revealAllMines();
-        gameOver();
-        return;
-      }
-    }
-    showCell(elCurrCell);
-    if (!cell.minesAroundCount) showCells(elCurrCell);
-  }
-  isVictory();
-}
-
-//checks is isMarked reveals the cell innerText
-function showCell(elCell) {
-  var coords = getCellCoords(elCell);
-  var cell = gBoard[coords.i][coords.j];
-  if (cell.isMarked) return;
-  // modal
-  cell.isShown = true;
-  // dom
-  var cellValue = cell.isMine ? MINE : cell.minesAroundCount;
-  elCell.innerHTML = getCellHTML(cellValue);
-  console.log(gBoard);
-}
-
-// checks if isShown toggles isMarked, makes cell unresponsive to left-click
-function toggleMark(elCell) {
-  var coords = getCellCoords(elCell);
-  var cell = gBoard[coords.i][coords.j];
-  if (cell.isShown) return;
-  // modal
-  cell.isMarked = cell.isMarked ? false : true;
-  // dom
-  var cellValue = cell.isMarked ? MARK : '';
-  console.log('elCell.innerHTML BEFORE', elCell.innerHTML);
-  elCell.innerHTML = getCellHTML(cellValue);
-  console.log('elCell.innerHTML AFTER', elCell.innerHTML);
-}
-
-// show all empty cells around the given elCell
-function showCells(elCell) {
-  var coords = getCellCoords(elCell);
-  var cell = gBoard[coords.i][coords.j];
-  for (var i = coords.i - 1; i <= coords.i + 1; i++) {
-    if (i < 0 || i >= gBoard.length) continue;
-    for (var j = coords.j - 1; j <= coords.j + 1; j++) {
-      if (i === coords.i && j === coords.j) continue;
-      if (j < 0 || j >= gBoard[i].length) continue;
-      if (cell.isMine) continue;
-      var elCell = getElCell(i, j);
-      showCell(elCell);
-    }
-  }
 }
 
 function revealAllMines() {
@@ -196,32 +135,11 @@ function revealAllMines() {
     for (var j = 0; j < gBoard[i].length; j++) {
       var currCell = gBoard[i][j];
       if (currCell.isMine) {
-        var elCurrCell = getElCell(i, j);
-        showCell(elCurrCell, currCell);
+        var coords = { i, j };
+        showCell(coords);
       }
     }
   }
-}
-
-//gets elCell, returns an object with the cell's coords
-function getCellCoords(elCell) {
-  var strCellId = elCell.id;
-  var parts = strCellId.split('-');
-  var cellCoords = { i: +parts[1], j: +parts[2] };
-  return cellCoords;
-}
-
-//gets cell, returns an HTML string which shows the cell's contents
-function getCellHTML(cellValue) {
-  // var cellValue = cell.isMarked ? MARK : cell.isMine ? MINE : cell.minesAroundCount;
-  return `<span style="font-size: 16px;">${cellValue}</span>`;
-}
-
-// gets cell coords, returns elCell
-function getElCell(cellI, cellJ) {
-  var cellId = `cell-${cellI}-${cellJ}`;
-  var elCell = document.querySelector(`#${cellId}`);
-  return elCell;
 }
 
 function minesNegsCount(cellI, cellJ, board) {
@@ -237,30 +155,22 @@ function minesNegsCount(cellI, cellJ, board) {
   return count;
 }
 
-function isVictory() {
-  var unMarkedMines = gGame.minesNum;
-  var unShownCells = Math.pow(gGame.boardSize, 2) - gGame.minesNum;
-  for (var i = 0; i < gBoard.length; i++) {
-    for (var j = 0; j < gBoard[i].length; j++) {
-      var currCell = gBoard[i][j];
-      if (currCell.isMine && currCell.isMarked) unMarkedMines--;
-      if (currCell.isShown) unShownCells--;
-    }
+function checkIfVictory() {
+  if (gGame.unmarkedMines === 0 && gGame.hiddenCellsCount === 0) {
+    stopSaveTime();
+    gGame.isOn = false;
+    document.querySelector('.modal span').innerText = 'You won!';
+    toggleModal();
+    victorySound.play();
+    renderSmiley(SMILEY_WIN);
   }
-  if ((unMarkedMines = unShownCells === 0)) victory();
-}
-
-function victory() {
-  stopSaveTime();
-  gGame.isOn = false;
-  document.querySelector('.modal span').innerText = 'You won!';
-  toggleModal();
-  victorySound.play();
-  updateSmiley(WIN);
 }
 
 function gameOver() {
+  console.log('game over');
   stopSaveTime();
+  updateRenderLives(-1);
+  revealAllMines();
   gGame.isOn = false;
   document.querySelector('.modal span').innerText = 'Game over!';
   toggleModal();
@@ -283,15 +193,60 @@ function soundsStop() {
   victorySound.currentTime = 0;
 }
 
-function updateLives(diff) {
+function updateRenderLives(diff) {
   // modal
   gGame.lives += diff;
-  // dom
 
+  // dom
   var strHTML = gGame.lives ? '' : 'No more lives!';
   for (var i = 0; i < gGame.lives; i++) {
     strHTML += LIFE;
   }
   var elLives = document.querySelector('.lives');
   elLives.innerHTML = strHTML;
+}
+
+function renderSmiley(SMILEY_TYPE) {
+  var strHTML = `<span onclick="init()">${SMILEY_TYPE}</span>`;
+  var elSmiley = document.querySelector('.smiley');
+  elSmiley.innerHTML = strHTML;
+}
+
+function renderUpdateFlags(diff) {
+  var elFlags = document.querySelector('.flags');
+  // modal
+  gGame.flags += diff;
+  // dom
+  var strHTML = MARK + ': ' + gGame.flags;
+  elFlags.innerHTML = strHTML;
+}
+
+// HINTS section
+function buildRenderHints() {
+  // modal
+  gGame.hints = 3;
+  // dom
+  var strHTML = '';
+  for (var i = 0; i < gGame.hints; i++) {
+    strHTML += `<span id="hint-${i + 1}" onclick="clickedHint(this)">${HINT}</span>`;
+  }
+  var elHints = document.querySelector('.hints');
+  elHints.innerHTML = strHTML;
+}
+
+function clickedHint(elHint) {
+  if (!gGame.isOn) return;
+  elHint.innerHTML = HINT_USED;
+  gGame.isHintModeOn = true;
+  gGame.isOn = false;
+}
+
+function revealHint(coords) {
+  // LATER support unclicking a hint
+  setNegs(coords, peekCell);
+  setTimeout(function () {
+    setNegs(coords, unPeekCell);
+    gGame.isHintModeOn = false;
+    gGame.isOn = true;
+  }, 1000);
 }
